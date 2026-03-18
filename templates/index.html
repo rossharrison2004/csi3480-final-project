@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Toolkit</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="background-glow glow-1"></div>
+    <div class="background-glow glow-2"></div>
+
+    <div class="page-wrapper">
+        <header class="hero">
+            <div class="hero-badge">CSI 3480 Security Project</div>
+            <h1>Secure Password Toolkit</h1>
+            <p>
+                Generate strong passwords, hash them securely with bcrypt,
+                verify password-hash matches, and check password strength.
+            </p>
+        </header>
+
+        <main class="card-grid">
+            <section class="card">
+                <h2>Password Generator</h2>
+                <p class="section-desc">Generate a secure random password with customizable settings.</p>
+
+                <label for="length">Password Length</label>
+                <input type="number" id="length" min="4" max="64" value="12">
+
+                <div class="option-grid">
+                    <label class="option-item"><input type="checkbox" id="upper" checked> Uppercase</label>
+                    <label class="option-item"><input type="checkbox" id="lower" checked> Lowercase</label>
+                    <label class="option-item"><input type="checkbox" id="digits" checked> Numbers</label>
+                    <label class="option-item"><input type="checkbox" id="symbols" checked> Symbols</label>
+                </div>
+
+                <button onclick="generatePassword()">Generate Password</button>
+
+                <div class="result-box">
+                    <div id="generatedPassword" class="result-text">Your generated password will appear here.</div>
+                    <button class="secondary-btn" onclick="copyText('generatedPassword')">Copy</button>
+                </div>
+
+                <div id="generatedStrength" class="feedback-box info">Strength feedback will appear here.</div>
+            </section>
+
+            <section class="card">
+                <h2>Password Hasher</h2>
+                <p class="section-desc">Hash a password securely using bcrypt.</p>
+
+                <label for="passwordToHash">Enter Password</label>
+                <div class="input-row">
+                    <input type="password" id="passwordToHash" placeholder="Enter password to hash">
+                    <button class="toggle-btn" onclick="toggleVisibility('passwordToHash')">Show</button>
+                </div>
+
+                <button onclick="hashPassword()">Hash Password</button>
+
+                <div class="result-box">
+                    <div id="hashedPassword" class="result-text">Your bcrypt hash will appear here.</div>
+                    <button class="secondary-btn" onclick="copyText('hashedPassword')">Copy</button>
+                </div>
+
+                <div id="hashStrength" class="feedback-box info">Password strength feedback will appear here.</div>
+            </section>
+
+            <section class="card">
+                <h2>Password Verifier</h2>
+                <p class="section-desc">Check whether a password matches a given bcrypt hash.</p>
+
+                <label for="verifyPasswordInput">Enter Password</label>
+                <div class="input-row">
+                    <input type="password" id="verifyPasswordInput" placeholder="Enter password">
+                    <button class="toggle-btn" onclick="toggleVisibility('verifyPasswordInput')">Show</button>
+                </div>
+
+                <label for="verifyHashInput">Paste Stored Hash</label>
+                <textarea id="verifyHashInput" placeholder="Paste a bcrypt hash here"></textarea>
+
+                <button onclick="verifyPassword()">Verify Password</button>
+
+                <div id="verifyResult" class="feedback-box info">Verification result will appear here.</div>
+            </section>
+
+            <section class="card">
+                <h2>Password Strength Checker</h2>
+                <p class="section-desc">Analyze password strength and get improvement suggestions.</p>
+
+                <label for="strengthPassword">Enter Password</label>
+                <div class="input-row">
+                    <input type="password" id="strengthPassword" placeholder="Check password strength">
+                    <button class="toggle-btn" onclick="toggleVisibility('strengthPassword')">Show</button>
+                </div>
+
+                <button onclick="checkStrength()">Check Strength</button>
+
+                <div id="strengthResult" class="feedback-box info">Strength analysis will appear here.</div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+
