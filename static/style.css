@@ -143,11 +143,58 @@ button {
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.18s ease, opacity 0.18s ease;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border: none;
+    border-radius: 12px;
 }
 
 button:hover {
     transform: translateY(-1px);
     opacity: 0.96;
+}
+
+/*optional glow effect for buttons, this can be commented out*/
+
+.glow-btn::before {
+    content:"";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    background: linear-gradient(
+        45deg,
+        red,
+        orange,
+        yellow,
+        lime,
+        cyan,
+        blue,
+        violet,
+        red
+    );
+    background-size: 300%;
+    border-radius: 14px;
+    filter: blur (1px);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+.glow-btn:hover::before {
+    opacity: 1;
+    animation: rainbowGlow 5s linear infinite;
+}
+
+@keyframes rainbowGlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 300% 50%;
+    }
 }
 
 .option-grid {
@@ -185,7 +232,8 @@ button:hover {
 }
 
 .toggle-btn {
-    width: 90px;
+    width: 75px;
+    height: 50px;
     flex-shrink: 0;
     background: #e2e8f0;
     color: #0f172a;
@@ -193,6 +241,7 @@ button:hover {
 
 .toggle-btn:hover {
     background: #cbd5e1;
+    filter: drop-shadow(0 0 4px #38bdf8);
 }
 
 .result-box {
@@ -218,6 +267,7 @@ button:hover {
 
 .secondary-btn:hover {
     background: #cbd5e1;
+    filter: drop-shadow(0 0 4px #38bdf8);
 }
 
 .feedback-box {
@@ -237,7 +287,8 @@ button:hover {
 }
 
 .info {
-    border-left-color: #38bdf8;
+    border-left-color: #d282ea;
+    filter: drop-shadow(0 0 4px #38bdf8);
 }
 
 .weak {
