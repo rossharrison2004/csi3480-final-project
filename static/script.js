@@ -59,3 +59,34 @@ function toggleVisibility(inputId, button) {
         button.textContent = 'Show';
     }
 }
+
+//Sends generated password to the backend for hashing and displays the bcrypt hash
+async function hashPassword() {
+    const password = document.getElementById('passwordToHash').value.trim();
+
+    if (!password) {
+
+        document.getElementById('hashedPassword').innerText = 'Please enter a password to hash.';
+        return;
+    }
+
+    try {
+        const response = await fetch('/hash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        document.getElementById('hashedPassword').innerText = data.error || 'Error hashing password.';
+        return;
+    }
+
+    document.getElementById('hashedPassword').innerText = data.hash;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('hashedPassword').innerText = 'An error occurred while hashing the password.';
+    }
+}
