@@ -46,3 +46,16 @@ function copyText(id) {
         console.error('Failed to copy: ', err);
     });
 }
+
+//Toggles the visibility of the password and hash
+function toggleVisibility(inputId, button) {
+    const input = document.getElementById(inputId);
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.textContent = 'Hide';
+    } else {
+        input.type = 'password';
+        button.textContent = 'Show';
+    }
+}

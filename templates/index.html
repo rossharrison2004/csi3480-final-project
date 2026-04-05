@@ -35,7 +35,7 @@
                     <label class="option-item"><input type="checkbox" id="symbols" checked> Symbols</label>
                 </div>
 
-                <button class="glow-btn"onclick="generatePassword()">Generate Password</button>
+                <button onclick="generatePassword()">Generate Password</button>
 
                 <div class="result-box">
                     <div id="generatedPassword" class="result-text">Your generated password will appear here.</div>
@@ -52,10 +52,10 @@
                 <label for="passwordToHash">Enter Password</label>
                 <div class="input-row">
                     <input type="password" id="passwordToHash" placeholder="Enter password to hash">
-                    <button class="toggle-btn" onclick="toggleVisibility('passwordToHash')">Show</button>
+                    <button class="toggle-btn" onclick="toggleVisibility('passwordToHash', this)">Show</button>
                 </div>
 
-                <button class="glow-btn" onclick="hashPassword()">Hash Password</button>
+                <button onclick="hashPassword()">Hash Password</button>
 
                 <div class="result-box">
                     <div id="hashedPassword" class="result-text">Your bcrypt hash will appear here.</div>
@@ -72,13 +72,13 @@
                 <label for="verifyPasswordInput">Enter Password</label>
                 <div class="input-row">
                     <input type="password" id="verifyPasswordInput" placeholder="Enter password">
-                    <button class="toggle-btn" onclick="toggleVisibility('verifyPasswordInput')">Show</button>
+                    <button class="toggle-btn" onclick="toggleVisibility('verifyPasswordInput', this)">Show</button>
                 </div>
 
                 <label for="verifyHashInput">Paste Stored Hash</label>
                 <textarea id="verifyHashInput" placeholder="Paste a bcrypt hash here"></textarea>
 
-                <button class="glow-btn" onclick="verifyPassword()">Verify Password</button>
+                <button onclick="verifyPassword()">Verify Password</button>
 
                 <div id="verifyResult" class="feedback-box info">Verification result will appear here.</div>
             </section>
@@ -93,7 +93,7 @@
                     <button class="toggle-btn" onclick="toggleVisibility('strengthPassword')">Show</button>
                 </div>
 
-                <button class="glow-btn" onclick="checkStrength()">Check Strength</button>
+                <button onclick="checkStrength()">Check Strength</button>
 
                 <div id="strengthResult" class="feedback-box info">Strength analysis will appear here.</div>
             </section>
