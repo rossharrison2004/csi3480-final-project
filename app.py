@@ -3,6 +3,7 @@ import bcrypt
 import secrets
 import string
 import re
+import math
 
 app = Flask(__name__)
 
@@ -52,48 +53,115 @@ def generate_secure_password(length, use_upper, use_lower, use_digits, use_symbo
     return "".join(password_chars), None
 
 
+def calculate_entropy(password):
+    """Calculate Shannon entropy bits: log2(pool_size) * length"""
+    pool = 0
+    if re.search(r"[A-Z]", password):
+        pool += 26
+    if re.search(r"[a-z]", password):
+        pool += 26
+    if re.search(r"\d", password):
+        pool += 10
+    if re.search(r"[!@#$%^&*()\-_=\+\[\]{};:,.?/]", password):
+        pool += 24
+
+    if pool == 0:
+        return 0
+
+    return round(math.log2(pool) * len(password), 1)
+
+
+def estimate_crack_time(entropy_bits):
+    """
+    Estimate crack time assuming 10 billion guesses/second (modern GPU attack).
+    Returns a human-readable string.
+    """
+    guesses_per_second = 1e10
+    combinations = 2 ** entropy_bits
+    seconds = combinations / guesses_per_second
+
+    if seconds < 1:
+        return "less than 1 second"
+    elif seconds < 60:
+        return f"{int(seconds)} seconds"
+    elif seconds < 3600:
+        return f"{int(seconds // 60)} minutes"
+    elif seconds < 86400:
+        return f"{int(seconds // 3600)} hours"
+    elif seconds < 31536000:
+        return f"{int(seconds // 86400)} days"
+    elif seconds < 3.154e9:
+        return f"{int(seconds // 31536000)} years"
+    elif seconds < 3.154e12:
+        return f"{int(seconds // 3.154e9)} thousand years"
+    elif seconds < 3.154e15:
+        return f"{int(seconds // 3.154e12)} million years"
+    else:
+        return "centuries"
+
+
 def evaluate_password_strength(password):
     if not password:
         return {
             "label": "Very Weak",
             "score": 0,
-            "feedback": ["Please enter a password."]
+            "entropy": 0,
+            "crack_time": "instant",
+            "feedback": ["Please enter a password."],
+            "has_upper": False,
+            "has_lower": False,
+            "has_digits": False,
+            "has_symbols": False,
+            "has_length": False
         }
 
     if password.lower() in COMMON_PASSWORDS:
         return {
             "label": "Very Weak",
             "score": 0,
-            "feedback": ["This password is too common and unsafe."]
+            "entropy": 0,
+            "crack_time": "less than 1 second",
+            "feedback": ["This password is too common and unsafe."],
+            "has_upper": False,
+            "has_lower": False,
+            "has_digits": False,
+            "has_symbols": False,
+            "has_length": False
         }
 
     score = 0
     feedback = []
+
+    has_upper   = bool(re.search(r"[A-Z]", password))
+    has_lower   = bool(re.search(r"[a-z]", password))
+    has_digits  = bool(re.search(r"\d", password))
+    has_symbols = bool(re.search(r"[!@#$%^&*()\-_=\+\[\]{};:,.?/]", password))
+    has_length  = len(password) >= 12
 
     if len(password) >= 8:
         score += 1
     else:
         feedback.append("Use at least 8 characters.")
 
-    if len(password) >= 12:
+    if has_length:
         score += 1
 
-    if re.search(r"[A-Z]", password):
+    if has_upper:
         score += 1
     else:
         feedback.append("Add at least one uppercase letter.")
 
-    if re.search(r"[a-z]", password):
+    if has_lower:
         score += 1
     else:
         feedback.append("Add at least one lowercase letter.")
 
-    if re.search(r"\d", password):
+    if has_digits:
         score += 1
     else:
         feedback.append("Add at least one number.")
 
-    if re.search(r"[!@#$%^&*()\-_=\+\[\]{};:,.?/]", password):
+    if has_symbols:
         score += 1
     else:
         feedback.append("Add at least one symbol.")
@@ -105,10 +173,56 @@ def evaluate_password_strength(password):
     else:
         label = "Strong"
 
+    entropy    = calculate_entropy(password)
+    crack_time = estimate_crack_time(entropy)
+
     return {
         "label": label,
         "score": score,
-        "feedback": feedback
+        "entropy": entropy,
+        "crack_time": crack_time,
+        "feedback": feedback,
+        "has_upper": has_upper,
+        "has_lower": has_lower,
+        "has_digits": has_digits,
+        "has_symbols": has_symbols,
+        "has_length": has_length
+    }
+
+
+def analyze_bcrypt_hash(hashed):
+    """
+    Decode the structure of a bcrypt hash string.
+    bcrypt format: $2b$<cost>$<22-char salt><31-char hash>
+    """
+    parts = hashed.split("$")
+    # parts = ['', '2b', '12', '<salt+hash>']
+    if len(parts) != 4:
+        return None
+
+    algorithm    = parts[1]         # e.g. '2b'
+    cost_factor  = int(parts[2])    # e.g. 12
+    rounds       = 2 ** cost_factor
+    salt         = parts[3][:22]    # first 22 chars of the payload
+    hash_segment = parts[3][22:]    # remaining 31 chars
+
+    # Estimate time per guess at 1000 bcrypt hashes/sec (typical GPU bcrypt rate)
+    bcrypt_hashes_per_sec = 1000
+    seconds_per_guess     = 1 / bcrypt_hashes_per_sec
+
+    return {
+        "algorithm":         f"bcrypt (${algorithm}$)",
+        "cost_factor":       cost_factor,
+        "rounds":            f"{rounds:,}",
+        "salt":              salt,
+        "hash_segment":      hash_segment,
+        "seconds_per_guess": seconds_per_guess,
+        "why_secure":        (
+            f"bcrypt runs {rounds:,} internal iterations per hash. "
+            f"At a typical GPU rate of ~{bcrypt_hashes_per_sec:,} hashes/sec, "
+            f"each guess takes ~{seconds_per_guess:.4f}s — making brute force "
+            f"attacks {rounds // 1000:,}x slower than a simple SHA-256 hash."
+        )
     }
 
 
@@ -126,9 +240,9 @@ def generate_password():
     except (TypeError, ValueError):
         return jsonify({"error": "Length must be a valid number."}), 400
 
-    use_upper = data.get("upper", True)
-    use_lower = data.get("lower", True)
-    use_digits = data.get("digits", True)
+    use_upper   = data.get("upper", True)
+    use_lower   = data.get("lower", True)
+    use_digits  = data.get("digits", True)
     use_symbols = data.get("symbols", True)
 
     password, error = generate_secure_password(
@@ -150,7 +264,7 @@ def generate_password():
 
 @app.route("/hash", methods=["POST"])
 def hash_password():
-    data = request.get_json()
+    data     = request.get_json()
     password = data.get("password", "").strip()
 
     if not password:
@@ -162,15 +276,16 @@ def hash_password():
     ).decode("utf-8")
 
     return jsonify({
-        "hash": hashed_password,
-        "strength": evaluate_password_strength(password)
+        "hash":          hashed_password,
+        "strength":      evaluate_password_strength(password),
+        "hash_analysis": analyze_bcrypt_hash(hashed_password)
     })
 
 
 @app.route("/verify", methods=["POST"])
 def verify_password():
-    data = request.get_json()
-    password = data.get("password", "")
+    data        = request.get_json()
+    password    = data.get("password", "")
     stored_hash = data.get("hash", "").strip()
 
     if not password or not stored_hash:
@@ -189,7 +304,7 @@ def verify_password():
 
 @app.route("/strength", methods=["POST"])
 def check_strength():
-    data = request.get_json()
+    data     = request.get_json()
     password = data.get("password", "")
 
     return jsonify({
