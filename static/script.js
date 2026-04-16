@@ -213,3 +213,102 @@ function copyText(id) {
         console.error('Failed to copy: ', err);
     });
 }
+
+
+// ── Dark / Light Mode Toggle ─────────────────────────────────────────────────
+
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
+    document.getElementById('themeToggle').childNodes[1].textContent = isLight ? ' Light Mode' : ' Dark Mode';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// Restore theme preference on load
+(function () {
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = '☀️';
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.childNodes[1].textContent = ' Light Mode';
+    }
+})();
+
+
+// ── Password History ──────────────────────────────────────────────────────────
+
+async function loadHistory() {
+    const res  = await fetch('/history');
+    const data = await res.json();
+    renderHistory(data.history || []);
+}
+
+function renderHistory(items) {
+    const container = document.getElementById('historyList');
+    if (!items.length) {
+        container.innerHTML = '<div class="history-empty">No history yet. Generate or hash a password to get started.</div>';
+        return;
+    }
+    container.innerHTML = items.map((item, i) => `
+        <div class="history-item">
+            <span class="history-badge history-badge-${item.type}">${item.type === 'hash' ? 'HASH' : 'PWD'}</span>
+            <span class="history-value">${item.value}</span>
+            <span class="history-strength" data-label="${item.label}">${item.label}</span>
+            <button class="secondary-btn history-copy-btn" onclick="copyValue(this, '${item.value.replace(/'/g, "\\'")}')">Copy</button>
+        </div>`).join('');
+}
+
+function copyValue(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+}
+
+async function clearHistory() {
+    await fetch('/history/clear', { method: 'POST' });
+    renderHistory([]);
+}
+
+async function exportHistory() {
+    const res   = await fetch('/history');
+    const data  = await res.json();
+    const items = data.history || [];
+
+    if (!items.length) { alert('No history to export.'); return; }
+
+    const exportRes = await fetch('/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+    });
+
+    if (!exportRes.ok) { alert('Export failed.'); return; }
+
+    const blob = await exportRes.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'passwords_export.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Reload history after generate/hash
+const _origGeneratePassword = generatePassword;
+generatePassword = async function () {
+    await _origGeneratePassword();
+    await loadHistory();
+};
+
+const _origHashPassword = hashPassword;
+hashPassword = async function () {
+    await _origHashPassword();
+    await loadHistory();
+};
+
+// Initial load
+loadHistory();
+

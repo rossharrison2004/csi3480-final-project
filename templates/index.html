@@ -10,6 +10,8 @@
     <div class="background-glow glow-1"></div>
     <div class="background-glow glow-2"></div>
 
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode"><span id="themeIcon">🌙</span> Dark Mode</button>
+
     <div class="page-wrapper">
 
         <header class="hero">
@@ -115,6 +117,24 @@
             </aside>
 
         </div>
+<<<<<<< HEAD
+=======
+
+        <!-- Password History Panel -->
+        <section class="history-panel card">
+            <div class="history-header">
+                <h2>📋 Password History</h2>
+                <div class="history-actions">
+                    <button class="secondary-btn" onclick="exportHistory()">⬇ Export (.txt)</button>
+                    <button class="secondary-btn" onclick="clearHistory()">🗑 Clear</button>
+                </div>
+            </div>
+            <p class="section-desc">Passwords and hashes generated this session (up to 20 entries).</p>
+            <div id="historyList">
+                <div class="history-empty">No history yet. Generate or hash a password to get started.</div>
+            </div>
+        </section>
+>>>>>>> 57474c89849b9b7ef0655be99cb9370905950319
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

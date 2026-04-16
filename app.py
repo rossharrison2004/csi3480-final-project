@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, Response
 import bcrypt
 import secrets
 import string
@@ -6,6 +6,7 @@ import re
 import math
 
 app = Flask(__name__)
+app.secret_key = secrets.token_hex(32)
 
 COMMON_PASSWORDS = {
     "123456",
@@ -256,9 +257,18 @@ def generate_password():
     if error:
         return jsonify({"error": error}), 400
 
+    strength = evaluate_password_strength(password)
+
+    # Save to session history
+    if "history" not in session:
+        session["history"] = []
+    session["history"] = ([{"type": "password", "value": password, "label": strength["label"]}]
+                          + session["history"])[:20]
+    session.modified = True
+
     return jsonify({
         "password": password,
-        "strength": evaluate_password_strength(password)
+        "strength": strength
     })
 
 
@@ -275,10 +285,25 @@ def hash_password():
         bcrypt.gensalt()
     ).decode("utf-8")
 
+    strength = evaluate_password_strength(password)
+    hash_analysis = analyze_bcrypt_hash(hashed_password)
+
+    # Save to session history
+    if "history" not in session:
+        session["history"] = []
+    session["history"] = ([{"type": "hash", "value": hashed_password, "label": strength["label"]}]
+                          + session["history"])[:20]
+    session.modified = True
+
     return jsonify({
         "hash":          hashed_password,
+<<<<<<< HEAD
         "strength":      evaluate_password_strength(password),
         "hash_analysis": analyze_bcrypt_hash(hashed_password)
+=======
+        "strength":      strength,
+        "hash_analysis": hash_analysis
+>>>>>>> 57474c89849b9b7ef0655be99cb9370905950319
     })
 
 
@@ -310,6 +335,43 @@ def check_strength():
     return jsonify({
         "strength": evaluate_password_strength(password)
     })
+
+
+@app.route("/history", methods=["GET"])
+def get_history():
+    return jsonify({"history": session.get("history", [])})
+
+
+@app.route("/history/clear", methods=["POST"])
+def clear_history():
+    session["history"] = []
+    session.modified = True
+    return jsonify({"ok": True})
+
+
+@app.route("/export", methods=["POST"])
+def export_data():
+    data  = request.get_json()
+    items = data.get("items", [])
+
+    if not items:
+        return jsonify({"error": "No items to export."}), 400
+
+    lines = ["Secure Password Toolkit — Export", "=" * 40, ""]
+    for item in items:
+        label = item.get("label", "")
+        value = item.get("value", "")
+        kind  = item.get("type", "item")
+        lines.append(f"[{kind.upper()}] ({label})")
+        lines.append(value)
+        lines.append("")
+
+    content = "\n".join(lines)
+    return Response(
+        content,
+        mimetype="text/plain",
+        headers={"Content-Disposition": "attachment; filename=passwords_export.txt"}
+    )
 
 
 if __name__ == "__main__":
