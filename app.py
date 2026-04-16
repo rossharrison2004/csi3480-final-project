@@ -296,14 +296,8 @@ def hash_password():
     session.modified = True
 
     return jsonify({
-        "hash":          hashed_password,
-<<<<<<< HEAD
-        "strength":      evaluate_password_strength(password),
-        "hash_analysis": analyze_bcrypt_hash(hashed_password)
-=======
-        "strength":      strength,
-        "hash_analysis": hash_analysis
->>>>>>> 57474c89849b9b7ef0655be99cb9370905950319
+        "hash": hashed_password,
+        "strength": evaluate_password_strength(password)
     })
 
 
