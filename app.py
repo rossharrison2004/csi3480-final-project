@@ -197,17 +197,15 @@ def analyze_bcrypt_hash(hashed):
     bcrypt format: $2b$<cost>$<22-char salt><31-char hash>
     """
     parts = hashed.split("$")
-    # parts = ['', '2b', '12', '<salt+hash>']
     if len(parts) != 4:
         return None
 
-    algorithm    = parts[1]         # e.g. '2b'
-    cost_factor  = int(parts[2])    # e.g. 12
+    algorithm    = parts[1]
+    cost_factor  = int(parts[2])
     rounds       = 2 ** cost_factor
-    salt         = parts[3][:22]    # first 22 chars of the payload
-    hash_segment = parts[3][22:]    # remaining 31 chars
+    salt         = parts[3][:22]
+    hash_segment = parts[3][22:]
 
-    # Estimate time per guess at 1000 bcrypt hashes/sec (typical GPU bcrypt rate)
     bcrypt_hashes_per_sec = 1000
     seconds_per_guess     = 1 / bcrypt_hashes_per_sec
 
@@ -247,11 +245,7 @@ def generate_password():
     use_symbols = data.get("symbols", True)
 
     password, error = generate_secure_password(
-        length,
-        use_upper,
-        use_lower,
-        use_digits,
-        use_symbols
+        length, use_upper, use_lower, use_digits, use_symbols
     )
 
     if error:
@@ -285,7 +279,7 @@ def hash_password():
         bcrypt.gensalt()
     ).decode("utf-8")
 
-    strength = evaluate_password_strength(password)
+    strength      = evaluate_password_strength(password)
     hash_analysis = analyze_bcrypt_hash(hashed_password)
 
     # Save to session history
@@ -295,9 +289,11 @@ def hash_password():
                           + session["history"])[:20]
     session.modified = True
 
+    # FIX: hash_analysis is now included in the response
     return jsonify({
-        "hash": hashed_password,
-        "strength": evaluate_password_strength(password)
+        "hash":          hashed_password,
+        "strength":      strength,
+        "hash_analysis": hash_analysis
     })
 
 
