@@ -10,97 +10,130 @@
     <div class="background-glow glow-1"></div>
     <div class="background-glow glow-2"></div>
 
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode"><span id="themeIcon">🌙</span> Dark Mode</button>
+
     <div class="page-wrapper">
+
         <header class="hero">
-            <div class="hero-badge">CSI 3480 Security Project</div>
+            <div class="hero-badge">CSI 3480 — Security &amp; Privacy in Computing</div>
             <h1>Secure Password Toolkit</h1>
-            <p>
-                Generate strong passwords, hash them securely with bcrypt,
-                verify password-hash matches, and check password strength.
-            </p>
+            <p>Generate strong passwords, hash them securely with bcrypt, verify password-hash matches, and analyze password strength.</p>
         </header>
 
-        <main class="card-grid">
-            <section class="card">
-                <h2>Password Generator</h2>
-                <p class="section-desc">Generate a secure random password with customizable settings.</p>
+        <div class="main-layout">
 
-                <label for="length">Password Length</label>
-                <input type="number" id="length" min="4" max="64" value="12">
+            <!-- 2x2 card grid -->
+            <div class="card-grid">
 
-                <div class="option-grid">
-                    <label class="option-item"><input type="checkbox" id="upper" checked> Uppercase</label>
-                    <label class="option-item"><input type="checkbox" id="lower" checked> Lowercase</label>
-                    <label class="option-item"><input type="checkbox" id="digits" checked> Numbers</label>
-                    <label class="option-item"><input type="checkbox" id="symbols" checked> Symbols</label>
+                <!-- Card 1: Password Generator -->
+                <section class="card">
+                    <h2>Password Generator</h2>
+                    <p class="section-desc">Generate a cryptographically secure random password.</p>
+
+                    <label for="length">Password Length</label>
+                    <input type="number" id="length" min="4" max="64" value="12">
+
+                    <div class="option-grid">
+                        <label class="option-item"><input type="checkbox" id="upper" checked> Uppercase</label>
+                        <label class="option-item"><input type="checkbox" id="lower" checked> Lowercase</label>
+                        <label class="option-item"><input type="checkbox" id="digits" checked> Numbers</label>
+                        <label class="option-item"><input type="checkbox" id="symbols" checked> Symbols</label>
+                    </div>
+
+                    <button class="glow-btn" onclick="generatePassword()">Generate Password</button>
+
+                    <div class="result-box">
+                        <div id="generatedPassword" class="result-text">Your generated password will appear here.</div>
+                        <button class="secondary-btn" onclick="copyText('generatedPassword')">Copy</button>
+                    </div>
+                </section>
+
+                <!-- Card 2: Password Hasher -->
+                <section class="card">
+                    <h2>Password Hasher</h2>
+                    <p class="section-desc">Hash a password securely using bcrypt.</p>
+
+                    <label for="passwordToHash">Enter Password</label>
+                    <div class="input-row">
+                        <input type="password" id="passwordToHash" placeholder="Enter password to hash" oninput="liveStrength(this.value)">
+                        <button class="toggle-btn" onclick="toggleVisibility('passwordToHash')">Show</button>
+                    </div>
+
+                    <button class="glow-btn" onclick="hashPassword()">Hash Password</button>
+
+                    <div class="result-box">
+                        <div id="hashedPassword" class="result-text">Your bcrypt hash will appear here.</div>
+                        <button class="secondary-btn" onclick="copyText('hashedPassword')">Copy</button>
+                    </div>
+                </section>
+
+                <!-- Card 3: Password Verifier -->
+                <section class="card">
+                    <h2>Password Verifier</h2>
+                    <p class="section-desc">Check whether a password matches a bcrypt hash.</p>
+
+                    <label for="verifyPasswordInput">Enter Password</label>
+                    <div class="input-row">
+                        <input type="password" id="verifyPasswordInput" placeholder="Enter password" oninput="liveStrength(this.value)">
+                        <button class="toggle-btn" onclick="toggleVisibility('verifyPasswordInput')">Show</button>
+                    </div>
+
+                    <label for="verifyHashInput">Paste Stored Hash</label>
+                    <textarea id="verifyHashInput" placeholder="Paste a bcrypt hash here"></textarea>
+
+                    <button class="glow-btn" onclick="verifyPassword()">Verify Password</button>
+
+                    <div id="verifyResult" class="feedback-box info">Verification result will appear here.</div>
+                </section>
+
+                <!-- Card 4: Hash Analysis (replaces Strength Checker) -->
+                <section class="card">
+                    <h2>Hash Analysis</h2>
+                    <p class="section-desc">Decode the structure of a bcrypt hash and understand why it's secure.</p>
+
+                    <div id="hashAnalysis">
+                        <div class="analysis-empty">
+                            <p>Hash a password above to see a full breakdown of the bcrypt output.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Strength sidebar -->
+            <aside class="strength-sidebar">
+                <div class="sidebar-header">
+                    <span class="sidebar-icon">🔒</span>
+                    <h3>Strength Analysis</h3>
                 </div>
+                <p class="sidebar-hint">Type in any password field to analyze in real time.</p>
 
-                <button onclick="generatePassword()">Generate Password</button>
-
-                <div class="result-box">
-                    <div id="generatedPassword" class="result-text">Your generated password will appear here.</div>
-                    <button class="secondary-btn" onclick="copyText('generatedPassword')">Copy</button>
+                <div id="sidebar-strength">
+                    <div class="sidebar-empty">
+                        <div class="empty-icon">— — —</div>
+                        <p>No password entered yet.</p>
+                    </div>
                 </div>
+            </aside>
 
-                <div id="generatedStrength" class="feedback-box info">Strength feedback will appear here.</div>
-            </section>
+        </div>
 
-            <section class="card">
-                <h2>Password Hasher</h2>
-                <p class="section-desc">Hash a password securely using bcrypt.</p>
-
-                <label for="passwordToHash">Enter Password</label>
-                <div class="input-row">
-                    <input type="password" id="passwordToHash" placeholder="Enter password to hash">
-                    <button class="toggle-btn" onclick="toggleVisibility('passwordToHash', this)">Show</button>
+        <!-- Password History Panel -->
+        <section class="history-panel card">
+            <div class="history-header">
+                <h2>📋 Password History</h2>
+                <div class="history-actions">
+                    <button class="secondary-btn" onclick="exportHistory()">⬇ Export (.txt)</button>
+                    <button class="secondary-btn" onclick="clearHistory()">🗑 Clear</button>
                 </div>
-
-                <button onclick="hashPassword()">Hash Password</button>
-
-                <div class="result-box">
-                    <div id="hashedPassword" class="result-text">Your bcrypt hash will appear here.</div>
-                    <button class="secondary-btn" onclick="copyText('hashedPassword')">Copy</button>
-                </div>
-
-                <div id="hashStrength" class="feedback-box info">Password strength feedback will appear here.</div>
-            </section>
-
-            <section class="card">
-                <h2>Password Verifier</h2>
-                <p class="section-desc">Check whether a password matches a given bcrypt hash.</p>
-
-                <label for="verifyPasswordInput">Enter Password</label>
-                <div class="input-row">
-                    <input type="password" id="verifyPasswordInput" placeholder="Enter password">
-                    <button class="toggle-btn" onclick="toggleVisibility('verifyPasswordInput', this)">Show</button>
-                </div>
-
-                <label for="verifyHashInput">Paste Stored Hash</label>
-                <textarea id="verifyHashInput" placeholder="Paste a bcrypt hash here"></textarea>
-
-                <button onclick="verifyPassword()">Verify Password</button>
-
-                <div id="verifyResult" class="feedback-box info">Verification result will appear here.</div>
-            </section>
-
-            <section class="card">
-                <h2>Password Strength Checker</h2>
-                <p class="section-desc">Analyze password strength and get improvement suggestions.</p>
-
-                <label for="strengthPassword">Enter Password</label>
-                <div class="input-row">
-                    <input type="password" id="strengthPassword" placeholder="Check password strength">
-                    <button class="toggle-btn" onclick="toggleVisibility('strengthPassword', this)">Show</button>
-                </div>
-
-                <button onclick="checkStrength()">Check Strength</button>
-
-                <div id="strengthResult" class="feedback-box info">Strength analysis will appear here.</div>
-            </section>
-        </main>
+            </div>
+            <p class="section-desc">Passwords and hashes generated this session (up to 20 entries).</p>
+            <div id="historyList">
+                <div class="history-empty">No history yet. Generate or hash a password to get started.</div>
+            </div>
+        </section>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-
